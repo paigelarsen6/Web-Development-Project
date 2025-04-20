@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tic Tac Toe</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(to right, #c2e9fb, #a1c4fd, #d4fc79, #96e6a1);
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .game-container {
+      background-color: #ffffffdd;
+      padding: 30px;
+      border: 3px solid #444;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 3rem;
+      background: linear-gradient(45deg, #ff6ec4, #7873f5, #3aeabb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 3px 3px 5px rgba(0,0,0,0.3);
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      gap: 6px;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+
+    .cell {
+      width: 100px;
+      height: 100px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+      font-size: 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s ease;
+    }
+
+    .cell.taken {
+      cursor: not-allowed;
+    }
+
+    #message {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    #play-again {
+      padding: 10px 20px;
+      font-size: 1rem;
+      background-color: #7873f5;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      display: none;
+      margin-bottom: 10px;
+    }
+
+    #score {
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="game-container">
+    <h1>Tic Tac Toe</h1>
+    <div class="board" id="board"></div>
+    <div id="message">Your move!</div>
+    <button id="play-again">Play Again</button>
+    <div id="score">You: 0 | Computer: 0</div>
+  </div>
+
+  <script>
+    const board = document.getElementById('board');
+    const message = document.getElementById('message');
+    const playAgainBtn = document.getElementById('play-again');
+    const scoreDisplay = document.getElementById('score');
+
+    const colors = ['#ff6ec4', '#6ecbff', '#52f2ae', '#f7b731', '#ff6b6b', '#7873f5'];
+
+    let cells = [];
+    let playerTurn = true;
+    let gameOver = false;
+    let playerWins = 0;
+    let computerWins = 0;
+    let roundCount = 0;
+
+    function createBoard() {
+      board.innerHTML = '';
+      cells = [];
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        cell.dataset.index = i;
+        cell.addEventListener('click', handlePlayerMove);
+        board.appendChild(cell);
+        cells.push(cell);
+      }
+      gameOver = false;
+      playerTurn = true;
+      message.textContent = "Your move!";
+      playAgainBtn.style.display = 'none';
+    }
+
+    function getRandomColor() {
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    function handlePlayerMove(e) {
+      const cell = e.target;
+      if (!playerTurn || cell.textContent || gameOver) return;
+
+      cell.textContent = 'X';
+      cell.style.color = getRandomColor();
+      cell.classList.add('taken');
+
+      if (checkWinner('X')) {
+        playerWins++;
+        endGame('You win this round!');
+        return;
+      }
+      if (isDraw()) {
+        endGame("It's a draw!");
+        return;
+      }
+
+      playerTurn = false;
+      setTimeout(handleComputerMove, 400);
+    }
+
+    function handleComputerMove() {
+      const emptyCells = cells.filter(cell => !cell.textContent);
+      if (emptyCells.length === 0) return;
+
+      const choice = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+      choice.textContent = 'O';
+      choice.style.color = getRandomColor();
+      choice.classList.add('taken');
+
+      if (checkWinner('O')) {
+        computerWins++;
+        endGame('Computer wins this round!');
+        return;
+      }
+      if (isDraw()) {
+        endGame("It's a draw!");
+        return;
+      }
+
+      playerTurn = true;
+    }
+
+    function checkWinner(player) {
+      const combos = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+      ];
+      return combos.some(combo => 
+        combo.every(index => cells[index].textContent === player)
+      );
+    }
+
+    function isDraw() {
+      return cells.every(cell => cell.textContent);
+    }
+
+    function endGame(msg) {
+      message.textContent = msg;
+      gameOver = true;
+      playAgainBtn.style.display = 'inline-block';
+      roundCount++;
+      scoreDisplay.textContent = `You: ${playerWins} | Computer: ${computerWins}`;
+      if (playerWins === 3 || computerWins === 3 || roundCount === 5) {
+        message.textContent += playerWins > computerWins ? " 🎉 You won the match!" : " 💻 Computer won the match!";
+        playAgainBtn.textContent = "Start New Match";
+      } else {
+        playAgainBtn.textContent = "Play Again";
+      }
+    }
+
+    playAgainBtn.addEventListener('click', () => {
+      if (playerWins === 3 || computerWins === 3 || roundCount === 5) {
+        playerWins = 0;
+        computerWins = 0;
+        roundCount = 0;
+        scoreDisplay.textContent = `You: 0 | Computer: 0`;
+      }
+      createBoard();
+    });
+
+    createBoard();
+  </script>
+</body>
+</html>
